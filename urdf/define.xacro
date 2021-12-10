@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="kbot">
+  <!--start include-->
+  <!--xacro:include filename = "$(find project_sim)/urdf/property.xacro"/-->
+    <xacro:property name = "Base_width" value = "0.25"/>
+    <xacro:property name = "Base_depth" value = "0.25"/>
+    <xacro:property name = "Base_height" value = "0.2"/>
+    <xacro:property name = "Wheel_radius" value = "0.2"/>
+    <xacro:property name = "wheel_support_radius" value = "0.1"/>
+    <xacro:property name = "wheel_joint_offset" value = "0.03"/>
+    <xacro:property name = "wheel_gap" value = "0.006"/>
+    <xacro:property name ="support_wheel_radius" value="${wheel_radius/2}"/>
+    <xacro:property name ="support_wheel_joint_offset" value="-0.052"/>
+  <!--end include-->
+
+  <!--start Box initial-->
+  <xacro:macro name = "Box_inertia" params = "mass weight height depth">
+      <inertia>
+          <mass value = "${mass}"/>
+          <inertia  ixx="${mass / 12.0 * (depth*depth + height*height)}" ixy="0.0" ixz="0.0" iyy="${mass / 12.0 * (weight*weight + height*height)}" iyz="0.0" izz="${mass / 12.0 * (weight*weight + depth*depth)}"/>
+      </inertia>
+  </xacro:macro>
+  <!--end Box initial-->
+
+  <!--start Cylinder initial-->
+  <xacro:macro name = "Cylinder_inertia" param = "radius hieght mass">
+      <inertia> 
+          <mass value = "${mass}"/>
+          <inertia ixx="${mass*(3*radius*radius+hieght*hieght)/12}" ixy = "0" ixz = "0" iyy="${mass*(3*radius*radius+hieght*hieght)/12}" iyz = "0" izz="${mass*radius*radius/2}"/> 
+      </inertia>
+  </xacro:macro>
+  <!--end Cylinder initial-->
+
+  <!--start sphere initial-->
+  <xacro:macro name="sphere_inertia" param="mass radius">
+      <inertia>
+        <mass value="${mass}"/>
+        <inertia ixx="${2.0*mass*(radius*radius)/5.0}" ixy="0.0" ixz="0.0" iyy="${2.0*mass*(radius*radius)/5.0}" iyz="0.0" izz="${2.0*mass*(radius*radius)/5.0}"/>
+      </inertia>
+    </xacro:macro>
+  <!--end sphere initial-->
+
+  <!--start define Base link-->
+  <link name = "Base_Link">
+      <xacro:Box_inertia mass = "1" weight = "${Base_width}" height = "${Base_height}" depth = "${Base_depth}" />
+      <visual>
+          <origin xyz = "0 0 0" rpy = "0 0 0"/> 
+          <geometry>
+              <box size = "${Base_depth} ${Base_width} ${Base_height}"/>
+          </geometry>
+      </visual>
+      <collision>
+          <geometry>
+              <box size = "${Base_depth} ${Base_width} ${Base_height}"/>
+          </geometry>
+      </collision>
+  </link>
+  <!--end define Base link--> 
+
+  <!--start define wheel-->
+  <xacro:macro name="wheel" param="prefix reflect">
+      <link name="${prefix}_wheel">
+        <visual>
+          <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+          <geometry>
+            <cylinder radius="${Wheel_radius}" length="0.005"/>
+          </geometry>
+        </visual>
+        <collision>
+          <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+          <geometry>
+            <cylinder radius="${Wheel_radius}" length="0.005"/>
+          </geometry>
+        </collision>
+        <xacro:cylinder_inertia mass="1" radius="${Wheel_radius}" height="0.005"/>
+      </link>
+  <!--end define wheel-->
+
+  <!--start define wheel_joint-->
+    <joint name="${prefix}_wheel_joint" type="continuous">
+          <axis xyz="0 1 0" rpy="0 0 0" />
+          <parent link= "Base_Link"/>
+          <child link="${prefix}_wheel"/>
+          <origin xyz="${wheel_joint_offset} ${((Base_width/2)+wheel_gap)*reflect} -0.005" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:wheel prefix="left" reflect="1"/>
+  <xacro:wheel prefix="right" reflect="-1"/>
+  <!--end define wheel-->
+
+  <!--start define support wheel-->
+  <link name="support_wheel">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="${wheel_support_radius}"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="${wheel_support_radius}"/>
+        </geometry>
+      </collision>
+      <xacro:sphere_inertia mass="0.5" radius="${wheel_support_radius}"/>
+  </link>
+  <!--end define support wheel-->
+
+  <!--start define joint support wheel-->
+  <joint name="wheel_support_joint" type="continuous">
+      <axis xyz="0 1 0" rpy="0 0 0" />
+      <parent link= "Base_Link"/>
+      <child link="support_wheel"/>
+      <origin xyz="${support_wheel_joint_offset} 0 -${support_wheel_radius+0.005}" rpy="0 0 0"/>
+  </joint>
+  <!--end define joint support wheel-->
+</robot>

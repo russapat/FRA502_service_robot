@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding = "UTF-8"?>
+
+<launch>
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find project_sim)/urdf/test.xacro"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output = "screen"/>
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" output = "screen"/>
+
+  <node name="rviz" pkg="rviz" type="rviz" required="true" args = "-d $(find project_sim)/rviz/rviz.rviz"/>
+
+  
+
+</launch>
